@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Serial Reader</title>
+</head>
+<body>
+    <h1>ESP32 Serial Reader</h1>
+    <div id="serialData"></div>
+
+    <script>
+        async function connectSerial() {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+
+                while (port.readable) {
+                    const reader = port.readable.getReader();
+                    try {
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) {
+                                console.log("Reader closed, exiting.");
+                                break;
+                            }
+                            document.getElementById('serialData').innerText += value + '\n';
+                        }
+                    } finally {
+                        reader.releaseLock();
+                    }
+                }
+            } catch (error) {
+                console.error('Serial connection failed:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            navigator.serial.addEventListener('connect', async (event) => {
+                console.log('Connected to serial port:', event.port);
+                await connectSerial();
+            });
+
+            navigator.serial.addEventListener('disconnect', (event) => {
+                console.log('Disconnected from serial port:', event.port);
+            });
+
+            connectSerial();
+        });
+    </script>
+</body>
+</html>
