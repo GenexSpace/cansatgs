@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Serial Reader</title>
+    <title>ESP32 Serial Reader v2</title>
 </head>
 <body>
     <h1>ESP32 Serial Reader</h1>
     <div id="serialData"></div>
+    <button id="connectButton">Connect to Serial Port</button>
 
     <script>
         async function connectSerial() {
@@ -35,6 +36,10 @@
             }
         }
 
+        document.getElementById('connectButton').addEventListener('click', async () => {
+            await connectSerial();
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             navigator.serial.addEventListener('connect', async (event) => {
                 console.log('Connected to serial port:', event.port);
@@ -44,8 +49,6 @@
             navigator.serial.addEventListener('disconnect', (event) => {
                 console.log('Disconnected from serial port:', event.port);
             });
-
-            connectSerial();
         });
     </script>
 </body>
