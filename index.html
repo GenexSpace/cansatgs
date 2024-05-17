@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Serial Reader v2</title>
+    <title>ESP32 Serial Reader v3</title>
 </head>
 <body>
     <h1>ESP32 Serial Reader</h1>
-    <div id="serialData"></div>
+    <div id="readings"></div>
     <button id="connectButton">Connect to Serial Port</button>
 
     <script>
@@ -25,7 +25,7 @@
                                 console.log("Reader closed, exiting.");
                                 break;
                             }
-                            document.getElementById('serialData').innerText += value + '\n';
+                            document.getElementById('readings').innerText += value + '\n';
                         }
                     } finally {
                         reader.releaseLock();
