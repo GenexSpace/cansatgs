@@ -119,13 +119,14 @@
     let rawData = [];  // Array to store all raw data
     let teamNumber = null;  // Variable to store the team number
     let port = null;  // Serial port object
+    let buffer = "";  // Buffer to accumulate incoming data
 
     function initializeCharts() {
         const chartOptions = {
             type: 'line',
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Ensures the charts take up the full available space
+                maintainAspectRatio: false,
                 scales: {
                     x: {
                         display: true,
@@ -281,48 +282,15 @@
                             console.log("Reader closed, exiting.");
                             break;
                         }
-                        // Convert the received data to text
-                        const text = new TextDecoder().decode(value);
-                        $('#readings').append($('<p>').text(text));
+                        // Convert the received data to text and add to buffer
+                        buffer += new TextDecoder().decode(value);
 
-                        // Assuming the text is in the format: Team Number, voltage, temp, Pressure, altitude, packet number
-                        const data = text.split(',').map(parseFloat);
+                        // Process the buffer for complete lines (data packets)
+                        let lines = buffer.split('\n');
+                        buffer = lines.pop(); // Keep incomplete line in the buffer
 
-                        if (data.length === 6) {
-                            const [teamNum, voltage, temperature, pressure, altitude, packetNum] = data;
-
-                            if (teamNumber === null) {
-                                // Set team number
-                                teamNumber = teamNum;
-                                document.getElementById('navbarTitle').textContent = `CanSat Data - ${teamNumber} [${packetNum}]`;
-                                document.title = `CanSat Data - ${teamNumber}`;
-                            } else {
-                                document.getElementById('navbarTitle').textContent = `CanSat Data - ${teamNumber} [${packetNum}]`;
-                            }
-
-                            let time = new Date().toLocaleTimeString();
-                            labels.push(time);
-                            voltageData.push(voltage);
-                            temperatureData.push(temperature);
-                            pressureData.push(pressure);
-                            altitudeData.push(altitude);
-
-                            // Keep the last 20 readings
-                            if (labels.length > 20) {
-                                labels.shift();
-                                voltageData.shift();
-                                temperatureData.shift();
-                                pressureData.shift();
-                                altitudeData.shift();
-                            }
-
-                            // Save raw data for CSV
-                            rawData.push([time, voltage, temperature, pressure, altitude, packetNum]);
-
-                            voltageChart.update();
-                            temperatureChart.update();
-                            pressureChart.update();
-                            altitudeChart.update();
+                        for (let line of lines) {
+                            processData(line.trim());
                         }
                     }
                 } finally {
@@ -331,6 +299,50 @@
             }
         } catch (error) {
             console.error('Serial connection failed:', error);
+        }
+    }
+
+    function processData(text) {
+        $('#readings').append($('<p>').text(text));
+
+        // Assuming the text is in the format: Team Number, voltage, temp, Pressure, altitude, packet number
+        const data = text.split(',').map(parseFloat);
+
+        if (data.length === 6) {
+            const [teamNum, voltage, temperature, pressure, altitude, packetNum] = data;
+
+            if (teamNumber === null) {
+                // Set team number
+                teamNumber = teamNum;
+                document.getElementById('navbarTitle').textContent = `CanSat Data - ${teamNumber} [${packetNum}]`;
+                document.title = `CanSat Data - ${teamNumber}`;
+            } else {
+                document.getElementById('navbarTitle').textContent = `CanSat Data - ${teamNumber} [${packetNum}]`;
+            }
+
+            let time = new Date().toLocaleTimeString();
+            labels.push(time);
+            voltageData.push(voltage);
+            temperatureData.push(temperature);
+            pressureData.push(pressure);
+            altitudeData.push(altitude);
+
+            // Keep the last 20 readings
+            if (labels.length > 20) {
+                labels.shift();
+                voltageData.shift();
+                temperatureData.shift();
+                pressureData.shift();
+                altitudeData.shift();
+            }
+
+            // Save raw data for CSV
+            rawData.push([time, voltage, temperature, pressure, altitude, packetNum]);
+
+            voltageChart.update();
+            temperatureChart.update();
+            pressureChart.update();
+            altitudeChart.update();
         }
     }
 
